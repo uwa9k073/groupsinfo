@@ -1,0 +1,14 @@
+{
+    "postgresql_settings": {
+        "databases": {
+            "groupsinfo": [
+                {
+                    "hosts": [
+                        "postgresql://testsuite@localhost:15433/groupsinfo_db_1"
+                    ],
+                    "shard_number": 0
+                }
+            ]
+        }
+    }
+}

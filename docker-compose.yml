@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+  groupsinfo:
+    image: groupsinfo:latest
+    privileged: true
+    ports:
+      - 8080:8080
+    depends_on:
+      - service-postgres
+    networks:
+      - postgres
+    
+  service-postgres:
+    image: postgres:latest
+    environment:
+      - POSTGRES_DB=groupsinfo_db_1
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - ./postgresql/schemas:/docker-entrypoint-initdb.d
+      - ./.pgdata:/var/lib/postgresql/data
+    ports:
+      - 5432
+    networks:
+      - postgres
+
+
+networks:
+  postgres:
+    driver: bridge
