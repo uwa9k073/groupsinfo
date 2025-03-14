@@ -2,6 +2,7 @@
 
 #include <boost/uuid/uuid.hpp>
 #include <optional>
+#include <userver/formats/serialize/boost_uuid.hpp>
 #include "userver/formats/json/value.hpp"
 #include "userver/formats/json/value_builder.hpp"
 #include "userver/formats/parse/boost_uuid.hpp"
@@ -10,8 +11,6 @@
 #include "userver/formats/serialize/common_containers.hpp"
 #include "userver/formats/serialize/to.hpp"
 #include "userver/storages/postgres/io/chrono.hpp"
-#include <userver/formats/serialize/boost_uuid.hpp>
-
 
 namespace models {
 struct Group {

@@ -1,4 +1,4 @@
-CMAKE_COMMON_FLAGS ?= -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+CMAKE_COMMON_FLAGS ?= -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -GNinja
 CMAKE_DEBUG_FLAGS ?= -DUSERVER_SANITIZE='addr ub'
 CMAKE_RELEASE_FLAGS ?=
 NPROCS ?= $(shell nproc)
@@ -37,12 +37,18 @@ test-debug test-release: test-%: build-%
 	cmake --build build_$* -j $(NPROCS) --target groupsinfo_unittest
 	cmake --build build_$* -j $(NPROCS) --target groupsinfo_benchmark
 	cd build_$* && ((test -t 1 && GTEST_COLOR=1 PYTEST_ADDOPTS="--color=yes" ctest -V) || ctest -V)
-	pep8 tests
+
+.PHONY check-pep8:
+check-pep8:
+	flake8 tests
 
 # Start the service (via testsuite service runner)
+.PHONY: start-debug start-release
+start-debug start-release: start-%: build-%
+	cmake --build build_$* -v --target start-groupsinfo
+
 .PHONY: service-start-debug service-start-release
-service-start-debug service-start-release: service-start-%:
-	cd ./build_$* && $(MAKE) start-groupsinfo
+service-start-debug service-start-release: service-start-%: start-%
 
 # Cleanup data
 .PHONY: clean-debug clean-release
@@ -67,26 +73,4 @@ install: install-release
 .PHONY: format
 format:
 	find src -name '*pp' -type f | xargs $(CLANG_FORMAT) -i
-	find tests -name '*.py' -type f | xargs autopep8 -i
-
-# Internal hidden targets that are used only in docker environment
-.PHONY: --in-docker-start-debug --in-docker-start-release
---in-docker-start-debug --in-docker-start-release: --in-docker-start-%: install-%
-	/home/user/.local/bin/groupsinfo \
-		--config /home/user/.local/etc/groupsinfo/static_config.yaml \
-		--config_vars /home/user/.local/etc/groupsinfo/config_vars.yaml
-
-# Build and run service in docker environment
-.PHONY: docker-start-service-debug docker-start-service-release
-docker-start-service-debug docker-start-service-release: docker-start-service-%:
-	$(DOCKER_COMPOSE) run -p 8080:8080 --rm groupsinfo-container make -- --in-docker-start-$*
-
-# Start specific target in docker environment
-.PHONY: docker-cmake-debug docker-build-debug docker-test-debug docker-clean-debug docker-install-debug docker-cmake-release docker-build-release docker-test-release docker-clean-release docker-install-release
-docker-cmake-debug docker-build-debug docker-test-debug docker-clean-debug docker-install-debug docker-cmake-release docker-build-release docker-test-release docker-clean-release docker-install-release: docker-%:
-	$(DOCKER_COMPOSE) run --rm groupsinfo-container make $*
-
-# Stop docker container and cleanup data
-.PHONY: docker-clean-data
-docker-clean-data:
-	$(DOCKER_COMPOSE) down -v
+	find tests -name '*.py' -type f | xargs black -l 79
